@@ -1,3 +1,5 @@
+import json
+import os
 import tkinter as tk
 from tkinter import ttk
 
@@ -6,29 +8,80 @@ from models.wardrobe import Wardrobe
 from models.outfit import Outfit
 import random
 
-my_wardrobe = Wardrobe()
+# Storage
 
-my_wardrobe.add_item(Top("sexy Red", "red", "short"))
-my_wardrobe.add_item(Bottom("baggy grey", "grey", "Jeans"))
-my_wardrobe.add_item(Shoes("adidas samba", "black", "Sneaker"))
-my_wardrobe.add_item(Top("long Red", "red", "long"))
-my_wardrobe.add_item(Bottom("skinny grey", "grey", "Jeans"))
-my_wardrobe.add_item(Shoes("adidas samba", "green", "Sneaker"))
+FILE_NAME = "wardrobe.json"
+
+my_wardrobe = Wardrobe()
 
 saved_outfits = []
 current_outfit = None
 
+def save_wardrobe():
+    data = []
+    for item in my_wardrobe.items:
+        extra = getattr(item, "sleeve_length", None) or getattr(item, "style", None) or getattr(item, "shoe_type", None)
+        data.append({
+            "name": item.name,
+            "category": item.category,
+            "color": item.color,
+            "extra": extra
+        })
+    with open(FILE_NAME, "w") as f:
+        json.dump(data, f)
+
+def load_wardrobe():
+    if not os.path.exists(FILE_NAME):
+        return
+    with open(FILE_NAME, "r") as f:
+        data = json.load(f)
+
+    for item in data:
+        if item["category"] == "Top":
+            my_wardrobe.add_item(Top(item["name"], item["color"], item["extra"]))
+        elif item["category"] == "Bottom":
+            my_wardrobe.add_item(Bottom(item["name"], item["color"], item["extra"]))
+        elif item["category"] == "Shoes":
+            my_wardrobe.add_item(Shoes(item["name"], item["color"], item["extra"]))
+
+load_wardrobe()
+
+if not my_wardrobe.items:
+    my_wardrobe.add_item(Top("Red Shirt", "red", "short"))
+    my_wardrobe.add_item(Bottom("Blue Jeans", "blue", "jeans"))
+    my_wardrobe.add_item(Shoes("Samba", "black", "Sneaker"))
+
+
 # App setup
+BG = "#1e1e2f"
+CARD = "#2a2a40"
+ACCENT = "#6c63ff"
+TEXT = "#ffffff"
 
 root = tk.Tk()
 root.title("Wradrobe App")
-root.geometry("600x500")
+root.geometry("700x500")
+root.configure(bg=BG)
 
 # Frames
-frame_generator = tk.Frame(root)
-frame_wardrobe = tk.Frame(root)
+frame_generator = tk.Frame(root, bg=BG)
+frame_wardrobe = tk.Frame(root, bg=BG)
 
 frame_generator.pack(fill="both", expand=True)
+
+def styled_button(parent, text, command):
+    return tk.Button(
+        parent,
+        text=text,
+        command=command,
+        bg=ACCENT,
+        fg="white",
+        activebackground="#5548c8",
+        relief="flat",
+        padx=10,
+        pady=5
+    )
+
 
 # Navigation
 def show_generator():
@@ -42,17 +95,18 @@ def show_wardrobe():
 
 # GENERATOR
 
-title = tk.Label(frame_generator, text = "Outfit Generator", font=("Arial", 18))
+title = tk.Label(frame_generator, text="Outfit Generator",
+                 font=("Helvetica", 20, "bold"),
+                 bg=BG, fg=ACCENT)
 title.grid(row=0, column=0, columnspan=3, pady=10)
 
-top_label = tk.Label(frame_generator, text="Top: -", font=("Arial", 12))
-bottom_label = tk.Label(frame_generator, text="Bottom: -", font=("Arial", 12))
-shoes_label = tk.Label(frame_generator, text="Shoes: -", font=("Arial", 12))
+top_label = tk.Label(frame_generator, text="Top: -", bg=BG, fg=TEXT)
+bottom_label = tk.Label(frame_generator, text="Bottom: -", bg=BG, fg=TEXT)
+shoes_label = tk.Label(frame_generator, text="Shoes: -", bg=BG, fg=TEXT)
 
 top_label.grid(row=1, column=0, columnspan=3)
 bottom_label.grid(row=2, column=0, columnspan=3)
 shoes_label.grid(row=3, column=0, columnspan=3)
-
 
 def generate_outfit():
     global current_outfit
@@ -110,11 +164,12 @@ tk.Button(frame_generator, text="Wardrobe Manager", command=show_wardrobe)\
 
 #saved outfits
 
-saved_label = tk.Label(frame_generator, text="Saved Outfits", font=("Arial", 14))
-saved_label.grid(row=0, column=3, padx=20)
+saved_label = tk.Label(frame_generator, text="Saved Outfits", bg=BG, fg=ACCENT)
+saved_label.grid(row=0, column=3)
 
-saved_listbox = tk.Listbox(frame_generator, width=30)
+saved_listbox = tk.Listbox(frame_generator, bg=CARD, fg=TEXT, selectbackground=ACCENT, width=30)
 saved_listbox.grid(row=1, column=3, rowspan=6, padx=20)
+
 
 def update_saved_list():
     saved_listbox.delete(0, tk.END)
@@ -124,30 +179,51 @@ def update_saved_list():
 
 #WARDROBEPAGE
 
-title2 = tk.Label(frame_wardrobe, text = "Wardrobe Manager", font=("Arial", 18))
-title2.pack(pady=10)
+frame_wardrobe.grid_columnconfigure(0, weight=2)
+frame_wardrobe.grid_columnconfigure(1, weight=1)
+frame_wardrobe.grid_rowconfigure(1, weight=1)
 
-listbox = tk.Listbox(frame_wardrobe)
-listbox.pack(fill="both", expand=True)
+# Titel
+title2 = tk.Label(frame_wardrobe,
+                  text="Wardrobe Manager",
+                  font=("Helvetica", 20, "bold"),
+                  bg=BG, fg=ACCENT)
+title2.grid(row=0, column=0, columnspan=2, pady=10)
+
+# -------- LEFT SIDE (LIST) --------
+listbox = tk.Listbox(frame_wardrobe,
+                     bg=CARD,
+                     fg=TEXT,
+                     selectbackground=ACCENT)
+
+listbox.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+
 
 def refresh_list():
     listbox.delete(0, tk.END)
     for item in my_wardrobe.items:
         listbox.insert(tk.END, str(item))
 
-# Add item
-name_entry = tk.Entry(frame_wardrobe)
-color_entry = tk.Entry(frame_wardrobe)
-extra_entry = tk.Entry(frame_wardrobe)
 
-name_entry.pack()
-color_entry.pack()
-extra_entry.pack()
+# -------- RIGHT SIDE (FORM) --------
+form_frame = tk.Frame(frame_wardrobe, bg=BG)
+form_frame.grid(row=1, column=1, sticky="n", padx=10, pady=10)
+
+tk.Label(form_frame, text="Add Item", bg=BG, fg=ACCENT).pack(pady=5)
+
+name_entry = tk.Entry(form_frame)
+color_entry = tk.Entry(form_frame)
+extra_entry = tk.Entry(form_frame)
+
+name_entry.pack(pady=5)
+color_entry.pack(pady=5)
+extra_entry.pack(pady=5)
 
 category_var = tk.StringVar()
-category_menu = ttk.Combobox(frame_wardrobe, textvariable=category_var)
+category_menu = ttk.Combobox(form_frame, textvariable=category_var)
 category_menu['values'] = ("Top", "Bottom", "Shoes")
-category_menu.pack()
+category_menu.pack(pady=5)
+
 
 def add_item():
     name = name_entry.get()
@@ -163,24 +239,25 @@ def add_item():
         item = Shoes(name, color, extra)
     else:
         return
-    
+
     my_wardrobe.add_item(item)
+    save_wardrobe()
     refresh_list()
 
-# remove item
+
 def remove_item():
     selected = listbox.curselection()
     if selected:
-        index = selected[0]
-        item = my_wardrobe.items[index]
+        item = my_wardrobe.items[selected[0]]
         my_wardrobe.remove_item(item)
+        save_wardrobe()
         refresh_list()
 
-# Buttons
-tk.Button(frame_wardrobe, text="Add Item", command=add_item).pack()
-tk.Button(frame_wardrobe, text="Remove Selected", command=remove_item).pack()
-tk.Button(frame_wardrobe, text="Back to Generator", command=show_generator).pack(pady=10)
 
+# Buttons im Form
+styled_button(form_frame, "Add Item", add_item).pack(pady=5)
+styled_button(form_frame, "Remove Selected", remove_item).pack(pady=5)
+styled_button(form_frame, "Back", show_generator).pack(pady=10)
 
 # START
 root.mainloop()
