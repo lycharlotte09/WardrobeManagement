@@ -16,8 +16,8 @@ class Outfit:
         shoes = wardrobe.filter_by_category("Shoes")
         
         if not tops or not bottoms or not shoes:
-            print("Not enough clothes in the wardrobe!")
-            return None
+            return("Not enough clothes in the wardrobe!")
+            #return None
         
         return Outfit(
             top=choice(tops),
