@@ -106,6 +106,7 @@ def show_preview(path):
         img = Image.open(path)
         img = img.resize((80, 80))
         preview_img = ImageTk.PhotoImage(img)
+        preview_label.config(image=preview_img)
     except:
         preview_label.config(image="")
 
@@ -250,20 +251,44 @@ title2 = tk.Label(frame_wardrobe,
                   bg=BG, fg=ACCENT)
 title2.grid(row=0, column=0, columnspan=2, pady=10)
 
-# -------- LEFT SIDE (LIST) --------
-listbox = tk.Listbox(frame_wardrobe,
-                     bg=CARD,
-                     fg=TEXT,
-                     selectbackground=ACCENT)
+#Scollbar
+canvas = tk.Canvas(frame_wardrobe, bg=BG, highlightthickness=0)
+scrollbar = tk.Scrollbar(frame_wardrobe, orient="vertical", command=canvas.yview)
 
-listbox.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+scrollable_frame = tk.Frame(canvas,bg=BG)
+scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+canvas.configure(yscrollcommand=scrollbar.set)
+
+canvas.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+scrollbar.grid(row=1, column=0, sticky="nse")
+
 
 
 def refresh_list():
-    listbox.delete(0, tk.END)
-    for item in my_wardrobe.items:
-        listbox.insert(tk.END, str(item))
+    for widget in scrollable_frame.winfo_children():
+        widget.destroy()
 
+    for item in my_wardrobe.items:
+        frame = tk.Frame(scrollable_frame, bg=CARD)
+        frame.pack(pady=5, padx=5, fill="x")
+
+        img = load_image(item.image_path)
+
+        if img:
+            img_label = tk.Label(frame, image=img, bg=CARD)
+            img_label.image = img  
+            img_label.pack(side="left", padx=5)
+
+        text = tk.Label(frame,
+                        text=f"{item.name} ({item.color})",
+                        bg=CARD,
+                        fg=TEXT)
+        text.pack(side="left", padx=5)
+
+        delete_btn = tk.Button(frame, text="Delete", command=lambda i=item: delete_item(i), bg="red", fg="white")
+        delete_btn.pack(side="right", padx=5)
 
 # -------- RIGHT SIDE (FORM) --------
 form_frame = tk.Frame(frame_wardrobe, bg=BG)
@@ -315,18 +340,15 @@ def add_item():
     refresh_list()
 
 
-def remove_item():
-    selected = listbox.curselection()
-    if selected:
-        item = my_wardrobe.items[selected[0]]
-        my_wardrobe.remove_item(item)
-        save_wardrobe()
-        refresh_list()
+def delete_item(item):
+    my_wardrobe.remove_item(item)
+    save_wardrobe()
+    refresh_list()
 
 
 # Buttons im Form
 styled_button(form_frame, "Add Item", add_item).pack(pady=5)
-styled_button(form_frame, "Remove Selected", remove_item).pack(pady=5)
+styled_button(form_frame, "Remove Selected", delete_item).pack(pady=5)
 styled_button(form_frame, "Back", show_generator).pack(pady=10)
 
 # START

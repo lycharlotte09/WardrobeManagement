@@ -58,9 +58,10 @@ python gui.py
 ```
 ## Future Improvements
 - Improved UI
-- Preview aof selected image
+- Preview of selected image
 - preview of image in wardrobe
 - saving outfits permamently
+- Unit Tests
 
 
 # To Do after every change:
