@@ -73,6 +73,11 @@ git commit -m "Description"
 git pull --rebase # optional, if remote changes are there
 git push          # upload changes
 ```
+## To run the unit tests
+
+```
+python -m unittest discover tests
+```
 
 # Author
 Lynn Charlotte Ruge
